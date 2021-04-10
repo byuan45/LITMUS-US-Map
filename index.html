@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <style type="text/css">
+      path:hover {
+        fill-opacity: 0.7;
+      }
+
+      div.tooltip {
+        position: absolute;
+        text-align: center;
+        width: 60px;
+        height: 28px;
+        padding: 2px;
+        font: 12px sans-serif;
+        background: white;
+        
+        border: 0px;
+        border-radius: 8px;
+        pointer-events: none;
+      }
+
+      body {
+        font: 11px sans-serif;
+      }
+
+      .legend {
+        position: absolute;
+        left: 800px;
+        top: 350px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="race-dropdown">Race:</div>
+    <div id="time-dropdown">Covid Case for:</div>
+    <div id="option">
+      <input
+        name="updateButton"
+        type="button"
+        value="Update"
+        onclick="submit()"
+      />
+    </div>
+    <script type="text/javascript">
+      var race = [
+        "American Indian/Alaska Native",
+        "Asian",
+        "Black",
+        "White",
+        "Native Hawaiian/Other Pacific Islander",
+        "Multiple/Other",
+        "Unknown",
+      ];
+      var raceDropdownChange = function () {
+        var currentRace = d3.select(this).property("value");
+        race = currentRace;
+      };
+      var race;
+      var raceDropdown = d3
+        .select("#race-dropdown")
+        .insert("select", "svg")
+        .on("change", raceDropdownChange);
+      raceDropdown
+        .selectAll("option")
+        .data(race)
+        .enter()
+        .append("option")
+        .attr("value", function (d) {
+          return d;
+        })
+        .text(function (d) {
+          return d[0].toUpperCase() + d.slice(1, d.length); // capitalize 1st letter
+        });
+      var time = [
+        "2020-01",
+        "2020-02",
+        "2020-03",
+        "2020-04",
+        "2020-05",
+        "2020-06",
+        "2020-07",
+        "2020-08",
+        "2020-09",
+        "2020-10",
+        "2020-11",
+        "2020-12",
+        "2021-01",
+        "2021-02",
+        "2021-03",
+      ];
+      var time;
+      function timeDropdownChange() {
+        var currentTime = d3.select(this).property("value");
+        time = currentTime;
+      }
+      var timeDropdown = d3
+        .select("#time-dropdown")
+        .insert("select", "svg")
+        .on("change", timeDropdownChange);
+      timeDropdown
+        .selectAll("option")
+        .data(time)
+        .enter()
+        .append("option")
+        .attr("value", function (d) {
+          return d;
+        })
+        .text(function (d) {
+          return d;
+        });
+      var api =
+        "https://data.cdc.gov/resource/n8mc-b4w4.json?$$app_token=RKTJDZZUJEMzBDQDZCBHJJk46&race=Asian&case_month=2020-04";
+      function submit() {
+        api =
+          "https://data.cdc.gov/resource/n8mc-b4w4.json?$$app_token=RKTJDZZUJEMzBDQDZCBHJJk46&" +
+          "case_month=" +
+          time +
+          "&" +
+          "race=" +
+          race;
+        console.log(api);
+      }
+      //Width and height of map
+      var width = 960;
+      var height = 500;
+
+      // D3 Projection
+      var projection = d3.geo
+        .albersUsa()
+        .translate([width / 2, height / 2])
+        .scale([1000]);
+
+      var path = d3.geo.path().projection(projection);
+
+      var color = d3.scale
+        .linear()
+        .range([
+          "rgb(213,222,217)",
+          "rgb(69,173,168)",
+          "rgb(84,36,55)",
+          "rgb(217,91,67)",
+        ]);
+
+      var legendText = [
+        "Over 200",
+        "Between 51-200",
+        "Between 1-50",
+        "No Cases Reported",
+      ];
+
+      var svg = d3
+        .select("body")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+      var div = d3
+        .select("body")
+        .append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 0);
+
+      var stateMap = new Map();
+      var cityMap = new Map();
+      d3.json(api, function (data) {
+        color.domain([0, 1, 2, 3]);
+        d3.json("US.json", function (json) {
+          for (var i = 0; i < data.length; i++) {
+            var dataState = data[i].res_state;
+            if (stateMap.has(dataState)) {
+              var increase = stateMap.get(dataState);
+              stateMap.set(dataState, increase + 1);
+            } else {
+              stateMap.set(dataState, 1);
+            }
+            var dataCity = data[i].res_county;
+            if (cityMap.has(dataCity)) {
+              var increase = cityMap.get(dataCity)[1];
+              cityMap.set(dataCity, [data[i].res_state, increase + 1]);
+            } else {
+              cityMap.set(dataCity, [data[i].res_state, 1]);
+            }
+          }
+          for (var j = 0; j < json.features.length; j++) {
+            var jsonState = json.features[j].properties.NAME;
+            json.features[j].properties.visited = stateMap.get(jsonState);
+          }
+          svg
+            .selectAll("path")
+            .data(json.features)
+            .enter()
+            .append("path")
+            .attr("d", path)
+            .style("stroke", "#fff")
+            .style("stroke-width", "1")
+            .style("fill", function (d) {
+              var value = d.properties.visited;
+              if (value) {
+                if (value >= 0 && value <= 50) {
+                  return color(1);
+                }
+                if (value > 50 && value <= 200) {
+                  return color(2);
+                }
+                if (value > 200) {
+                  return color(3);
+                }
+              } else {
+                return "rgb(213,222,217)";
+              }
+            });
+
+          // Modified Legend Code from Mike Bostock: http://bl.ocks.org/mbostock/3888852
+          var legend = d3
+            .select("body")
+            .append("svg")
+            .attr("class", "legend")
+            .attr("width", 140)
+            .attr("height", 200)
+            .selectAll("g")
+            .data(color.domain().slice().reverse())
+            .enter()
+            .append("g")
+            .attr("transform", function (d, i) {
+              return "translate(0," + i * 20 + ")";
+            });
+
+          legend
+            .append("rect")
+            .attr("width", 18)
+            .attr("height", 18)
+            .style("fill", color);
+
+          legend
+            .append("text")
+            .data(legendText)
+            .attr("x", 24)
+            .attr("y", 9)
+            .attr("dy", ".35em")
+            .text(function (d) {
+              return d;
+            });
+        });
+      });
+    </script>
+  </body>
+</html>
