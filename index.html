@@ -194,19 +194,12 @@
       var color = d3.scale
         .linear()
         .range([
-          "rgb(213,222,217)",
-          "rgb(69,173,168)",
-          "rgb(84,36,55)",
-          "rgb(217,91,67)",
+          "rgb(255,0,0)",
+          "rgb(255,128,0)",
+          "rgb(255,255,51)",
+          "rgb(0,255,0)",
+          "rgb(0,0,255)",
         ]);
-
-      var legendText = [
-        "Over 200",
-        "Between 51-200",
-        "Between 1-50",
-        "No Cases Reported",
-      ];
-
       var svg = d3
         .select("body")
         .append("svg")
@@ -218,12 +211,13 @@
         .append("div")
         .attr("class", "tooltip")
         .style("opacity", 0);
-
+      let totalCases = 0;
       var stateMap = new Map();
       var cityMap = new Map();
       d3.json(api, function (data) {
-        console.log(api);
-        color.domain([0, 1, 2, 3]);
+        color.domain([0, 1, 2, 3, 4]);
+        let totalCases = 0;
+        console.log(api)
         d3.json("US.json", function (json) {
           for (var i = 0; i < data.length; i++) {
             var dataState = data[i].res_state;
@@ -241,11 +235,61 @@
               cityMap.set(dataCity, [data[i].res_state, 1]);
             }
           }
+          let stateKeys = Array.from(stateMap.keys());
+          for (var x = 0; x < stateKeys.length; x++) {
+            if (stateMap.get(stateKeys[x]) > totalCases) {
+              totalCases = stateMap.get(stateKeys[x]);
+            }
+          }
           for (var j = 0; j < json.features.length; j++) {
             var jsonState = json.features[j].properties.NAME;
             json.features[j].properties.visited = stateMap.get(jsonState);
           }
-          console.log(cityMap);
+          var legend = d3
+            .select("body")
+            .append("svg")
+            .attr("class", "legend")
+            .attr("width", 140)
+            .attr("height", 200)
+            .selectAll("g")
+            .data(color.domain().slice())
+            .enter()
+            .append("g")
+            .attr("transform", function (d, i) {
+              return "translate(0," + i * 20 + ")";
+            });
+
+          legend
+            .append("rect")
+            .attr("width", 18)
+            .attr("height", 18)
+            .style("fill", color);
+          var legendText = [
+            "Over" + Math.floor(totalCases / 5) * 4,
+            "Between " +
+              (Math.floor(totalCases / 5) * 3 + 1) +
+              "- " +
+              Math.floor(totalCases / 5) * 4,
+            "Between " +
+              (Math.floor(totalCases / 5) * 2 + 1) +
+              "- " +
+              Math.floor(totalCases / 5) * 3,
+            "Between " +
+              (Math.floor(totalCases / 5) + 1) +
+              "- " +
+              Math.floor(totalCases / 5) * 2,
+            "Between " + 1 + "- " + Math.floor(totalCases / 5),
+            "No Cases Reported",
+          ];
+          legend
+            .append("text")
+            .data(legendText)
+            .attr("x", 24)
+            .attr("y", 9)
+            .attr("dy", ".35em")
+            .text(function (d) {
+              return d;
+            });
           console.log(stateMap);
           svg
             .selectAll("path")
@@ -258,21 +302,35 @@
             .style("fill", function (d) {
               var value = d.properties.visited;
               if (value) {
-                if (value >= 0 && value <= 50) {
-                  return color(1);
+                if (value >= 0 && value <= Math.floor(totalCases / 5)) {
+                  return color(4);
                 }
-                if (value > 50 && value <= 200) {
+                if (
+                  value > Math.floor(totalCases / 5) &&
+                  value <= Math.floor(totalCases / 5) * 2
+                ) {
+                  return color(3);
+                }
+                if (
+                  value > Math.floor(totalCases / 5) * 2 &&
+                  value <= Math.floor(totalCases / 5) * 3
+                ) {
                   return color(2);
                 }
-                if (value > 200) {
-                  return color(3);
+                if (
+                  value > Math.floor(totalCases / 5) * 3 &&
+                  value <= Math.floor(totalCases / 5) * 4
+                ) {
+                  return color(1);
+                }
+                if (value > Math.floor(totalCases / 5) * 4) {
+                  return color(0);
                 }
               } else {
                 return "rgb(213,222,217)";
               }
             })
             .on("mouseover", function (d) {
-              console.log(d.properties.visited);
               div.transition().duration(200).style("opacity", 0.9);
               div
                 .text(d.properties.visited)
@@ -282,38 +340,9 @@
             .on("mouseout", function (d) {
               div.transition().duration(500).style("opacity", 0);
             });
-
-          var legend = d3
-            .select("body")
-            .append("svg")
-            .attr("class", "legend")
-            .attr("width", 140)
-            .attr("height", 200)
-            .selectAll("g")
-            .data(color.domain().slice().reverse())
-            .enter()
-            .append("g")
-            .attr("transform", function (d, i) {
-              return "translate(0," + i * 20 + ")";
-            });
-
-          legend
-            .append("rect")
-            .attr("width", 18)
-            .attr("height", 18)
-            .style("fill", color);
-
-          legend
-            .append("text")
-            .data(legendText)
-            .attr("x", 24)
-            .attr("y", 9)
-            .attr("dy", ".35em")
-            .text(function (d) {
-              return d;
-            });
         });
       });
+
       function submit() {
         d3.selectAll("svg > *").remove();
         api =
@@ -340,12 +369,12 @@
           }
         }
 
-        console.log(api);
         cityMap.clear();
         stateMap.clear();
         d3.json(api, function (data) {
-          color.domain([0, 1, 2, 3]);
           console.log(api);
+          color.domain([0, 1, 2, 3, 4]);
+          let totalCases = 0;
           d3.json("US.json", function (json) {
             for (var i = 0; i < data.length; i++) {
               var dataState = data[i].res_state;
@@ -363,11 +392,61 @@
                 cityMap.set(dataCity, [data[i].res_state, 1]);
               }
             }
+            let stateKeys = Array.from(stateMap.keys());
+            for (var x = 0; x < stateKeys.length; x++) {
+              if (stateMap.get(stateKeys[x]) > totalCases) {
+                totalCases = stateMap.get(stateKeys[x]);
+              }
+            }
             for (var j = 0; j < json.features.length; j++) {
               var jsonState = json.features[j].properties.NAME;
               json.features[j].properties.visited = stateMap.get(jsonState);
             }
-            console.log(cityMap);
+            var legend = d3
+              .select("body")
+              .append("svg")
+              .attr("class", "legend")
+              .attr("width", 140)
+              .attr("height", 200)
+              .selectAll("g")
+              .data(color.domain().slice())
+              .enter()
+              .append("g")
+              .attr("transform", function (d, i) {
+                return "translate(0," + i * 20 + ")";
+              });
+
+            legend
+              .append("rect")
+              .attr("width", 18)
+              .attr("height", 18)
+              .style("fill", color);
+            var legendText = [
+              "Over" + Math.floor(totalCases / 5) * 4,
+              "Between " +
+                (Math.floor(totalCases / 5) * 3 + 1) +
+                "- " +
+                Math.floor(totalCases / 5) * 4,
+              "Between " +
+                (Math.floor(totalCases / 5) * 2 + 1) +
+                "- " +
+                Math.floor(totalCases / 5) * 3,
+              "Between " +
+                (Math.floor(totalCases / 5) + 1) +
+                "- " +
+                Math.floor(totalCases / 5) * 2,
+              "Between " + 1 + "- " + Math.floor(totalCases / 5),
+              "No Cases Reported",
+            ];
+            legend
+              .append("text")
+              .data(legendText)
+              .attr("x", 24)
+              .attr("y", 9)
+              .attr("dy", ".35em")
+              .text(function (d) {
+                return d;
+              });
             console.log(stateMap);
             svg
               .selectAll("path")
@@ -380,21 +459,35 @@
               .style("fill", function (d) {
                 var value = d.properties.visited;
                 if (value) {
-                  if (value >= 0 && value <= 50) {
-                    return color(1);
+                  if (value >= 0 && value <= Math.floor(totalCases / 5)) {
+                    return color(4);
                   }
-                  if (value > 50 && value <= 200) {
+                  if (
+                    value > Math.floor(totalCases / 5) &&
+                    value <= Math.floor(totalCases / 5) * 2
+                  ) {
+                    return color(3);
+                  }
+                  if (
+                    value > Math.floor(totalCases / 5) * 2 &&
+                    value <= Math.floor(totalCases / 5) * 3
+                  ) {
                     return color(2);
                   }
-                  if (value > 200) {
-                    return color(3);
+                  if (
+                    value > Math.floor(totalCases / 5) * 3 &&
+                    value <= Math.floor(totalCases / 5) * 4
+                  ) {
+                    return color(1);
+                  }
+                  if (value > Math.floor(totalCases / 5) * 4) {
+                    return color(0);
                   }
                 } else {
                   return "rgb(213,222,217)";
                 }
               })
               .on("mouseover", function (d) {
-                console.log(d.properties.visited);
                 div.transition().duration(200).style("opacity", 0.9);
                 div
                   .text(d.properties.visited)
@@ -404,36 +497,9 @@
               .on("mouseout", function (d) {
                 div.transition().duration(500).style("opacity", 0);
               });
+
+            console.log(totalCases);
           });
-          var legend = d3
-            .select("body")
-            .append("svg")
-            .attr("class", "legend")
-            .attr("width", 140)
-            .attr("height", 200)
-            .selectAll("g")
-            .data(color.domain().slice().reverse())
-            .enter()
-            .append("g")
-            .attr("transform", function (d, i) {
-              return "translate(0," + i * 20 + ")";
-            });
-
-          legend
-            .append("rect")
-            .attr("width", 18)
-            .attr("height", 18)
-            .style("fill", color);
-
-          legend
-            .append("text")
-            .data(legendText)
-            .attr("x", 24)
-            .attr("y", 9)
-            .attr("dy", ".35em")
-            .text(function (d) {
-              return d;
-            });
         });
       }
     </script>
