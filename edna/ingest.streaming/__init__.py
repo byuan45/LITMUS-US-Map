@@ -63,7 +63,7 @@ class BaseStreamingIngest(BaseIngest, Iterator):
 from .TwitterStreamingIngest import TwitterStreamingIngest
 from .TwitterFilteredIngest import TwitterFilteredIngest
 from .CDCStreamingIngest import CDCStreamingIngest
-
+from .CTPStreamingIngest import CTPStreamingIngest
 from .KafkaIngest import KafkaIngest
 from .SimulatedIngest import SimulatedIngest
 
