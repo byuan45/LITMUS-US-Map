@@ -293,7 +293,7 @@ d3.json(api, function (data) {
 function submit() {
   d3.selectAll("svg > *").remove();
   api =
-    "https://data.cdc.gov/resource/n8mc-b4w4.json?$$app_token=RKTJDZZUJEMzBDQDZCBHJJk46$limit=23000&";
+    "https://data.cdc.gov/resource/n8mc-b4w4.json?$limit=23000&";
 
   if (time != "No Filter") {
     api += "case_month=" + time + "&";
@@ -369,7 +369,7 @@ function submit() {
         .attr("height", 18)
         .style("fill", color);
       var legendText = [
-        "Over" + Math.floor(totalCases / 5) * 4,
+        "Over " + Math.floor(totalCases / 5) * 4,
         "Between " +
           (Math.floor(totalCases / 5) * 3 + 1) +
           "- " +
