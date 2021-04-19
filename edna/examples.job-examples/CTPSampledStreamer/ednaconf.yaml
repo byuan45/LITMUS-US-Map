@@ -1,0 +1,10 @@
+---
+variables:
+  location: US
+  timeframe: daily
+  request_fields:
+    - date
+    - death
+    - hospitalizedCumulative
+    - positive
+    - totalTestResults

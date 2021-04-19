@@ -1,0 +1,56 @@
+body {
+  font: 12px sans-serif;
+}
+.tick > line {
+	fill: none;
+	stroke: black;
+}
+.tick > text {
+	fill: black;
+}
+.dotSelect,
+.dotSelect.selected.table1,
+.dotSelect.selected2.table2 {
+	stroke: #00FFFF;
+	fill: #00FFFF;
+}
+.selected.table1 {
+	stroke: red;
+	fill:red;
+}
+.selected2.table2 {
+	stroke: orange;
+	fill:orange;
+}
+.label {
+	fill: black;
+}
+path.domain {
+	fill: none;
+	stroke-width: 2px;
+	stroke: black;
+}
+#wrapper {
+	clear:both;
+}
+#chart1 {
+    float:left;
+}
+#chart2{
+	float:left;
+}
+#chart3 {
+	float:left;
+}
+#chart4 {
+    float:left;
+}
+#chart5{
+	float:left;
+}
+#chart6 {
+	float:left;
+}
+.hidden {
+    opacity: 0.1;
+}
