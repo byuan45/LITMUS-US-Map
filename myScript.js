@@ -11,6 +11,7 @@ var race = [
 ];
 var raceDropdownChange = function () {
   var currentRace = d3.select(this).property("value");
+  console.log(currentRace);
   race = currentRace;
 };
 var race;
@@ -159,13 +160,11 @@ let totalCases = 0;
 var stateMap = new Map();
 var cityMap = new Map();
 d3.json(api, function (data) {
-  console.log(api);
   color.domain([0, 1, 2, 3, 4]);
-  for (var i = 0; i < 5; i++) {
-    console.log(data[i]);
-  }
+
   let totalCases = 0;
   d3.json("US.json", function (json) {
+    console.log(api);
     for (var i = 0; i < data.length; i++) {
       var dataState = data[i].res_state;
       if (stateMap.has(dataState)) {
@@ -237,7 +236,6 @@ d3.json(api, function (data) {
       .text(function (d) {
         return d;
       });
-    console.log(stateMap);
     svg
       .selectAll("path")
       .data(json.features)
@@ -292,9 +290,28 @@ d3.json(api, function (data) {
 
 function submit() {
   d3.selectAll("svg > *").remove();
-  api =
-    "https://data.cdc.gov/resource/n8mc-b4w4.json?$limit=23000&";
-
+  api = "https://data.cdc.gov/resource/n8mc-b4w4.json?$limit=20000&";
+  if (typeof time != "string") {
+    time = "No Filter";
+  }
+  if (typeof race != "string") {
+    race = "No Filter";
+  }
+  if (typeof age != "string") {
+    age = "No Filter";
+  }
+  if (typeof sex != "string") {
+    sex = "No Filter";
+  }
+  if (age.includes(",")) {
+    age = "";
+  }
+  if (race.includes(",")) {
+    race = "";
+  }
+  if (sex.includes(",")) {
+    sex = "";
+  }
   if (time != "No Filter") {
     api += "case_month=" + time + "&";
   }
@@ -394,7 +411,6 @@ function submit() {
         .text(function (d) {
           return d;
         });
-      console.log(stateMap);
       svg
         .selectAll("path")
         .data(json.features)
@@ -444,8 +460,6 @@ function submit() {
         .on("mouseout", function (d) {
           div.transition().duration(500).style("opacity", 0);
         });
-
-      console.log(totalCases);
     });
   });
 }
